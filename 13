@@ -1,0 +1,52 @@
+import os
+import kagglehub
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.decomposition import FactorAnalysis
+from sklearn.cluster import KMeans
+
+print("--- Loading and Preparing Data ---")
+# Download dataset
+path = kagglehub.dataset_download("uciml/iris")
+
+# Load dataset
+df = pd.read_csv(os.path.join(path, "Iris.csv"))
+
+# Select numerical features for analysis, excluding the 'Id' column if present
+X = df[['SepalLengthCm', 'SepalWidthCm', 'PetalLengthCm', 'PetalWidthCm']]
+
+print("Dataset loaded and features selected.")
+
+# --- Factor Analysis ---
+print("\n--- Performing Factor Analysis ---")
+# Initialize Factor Analysis model to reduce to 2 components (latent factors)
+fa = FactorAnalysis(n_components=2, random_state=42) # Added random_state for reproducibility
+factors = fa.fit_transform(X)
+
+print("Factor Analysis Completed. First 5 rows of transformed factor scores:")
+# Display the first 5 rows of the generated factors
+print(factors[:5])
+
+# You can add the factors back to the DataFrame for further use if needed
+df_factors = pd.DataFrame(factors, columns=['Factor1', 'Factor2'])
+# df = pd.concat([df, df_factors], axis=1)
+
+# --- Cluster Analysis ---
+print("\n--- Performing Cluster Analysis ---")
+# K-Means Clustering: Using 3 clusters, as there are 3 species in the Iris dataset
+kmeans = KMeans(n_clusters=3, random_state=42, n_init=10) # n_init='auto' or a number is recommended
+df['Cluster'] = kmeans.fit_predict(X)
+
+print("Cluster Analysis Completed. First 5 rows with cluster assignments:")
+# Display the first 5 rows of the original features along with their assigned cluster
+print(df[['SepalLengthCm', 'SepalWidthCm', 'PetalLengthCm', 'PetalWidthCm', 'Cluster']].head())
+
+# Plotting the clusters based on Petal Length and Petal Width
+plt.figure(figsize=(9, 6))
+plt.scatter(df['PetalLengthCm'], df['PetalWidthCm'], c=df['Cluster'], cmap='viridis', s=50, alpha=0.8)
+plt.title('Cluster Analysis of Iris Dataset (K-Means, k=3)')
+plt.xlabel('Petal Length (cm)')
+plt.ylabel('Petal Width (cm)')
+plt.colorbar(label='Cluster ID')
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.show()
