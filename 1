@@ -1,0 +1,48 @@
+import pandas as pd
+import seaborn as sns
+
+# Load inbuilt time series dataset
+df = sns.load_dataset('flights')
+
+print("Original Data:")
+print(df.head())
+
+# Create a proper date column
+df['date'] = pd.to_datetime(df['year'].astype(str) + '-' + df['month'].astype(str))
+
+# Keep only needed columns
+df = df[['date', 'passengers']]
+
+# Introduce missing values manually (for cleaning practice)
+df.loc[5, 'passengers'] = None
+df.loc[10, 'passengers'] = None
+
+# Add duplicate row manually
+df = pd.concat([df, df.iloc[[2]]], ignore_index=True)
+
+print("\nMissing Values Before Cleaning:")
+print(df.isnull().sum())
+
+print("\nDuplicate Rows Before Cleaning:")
+print(df.duplicated().sum())
+
+# Fill missing values using forward fill
+df['passengers'] = df['passengers'].fillna(method='ffill')
+
+# Sort by date
+df = df.sort_values('date')
+
+# Remove duplicate rows
+df = df.drop_duplicates()
+
+# Set date as index
+df.set_index('date', inplace=True)
+
+print("\nCleaned Data:")
+print(df.head())
+
+print("\nMissing Values After Cleaning:")
+print(df.isnull().sum())
+
+print("\nDuplicate Rows After Cleaning:")
+print(df.duplicated().sum())
