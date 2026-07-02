@@ -1,0 +1,39 @@
+import os
+import kagglehub
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Download dataset
+path = kagglehub.dataset_download("rohanrao/nifty50-stock-market-data")
+
+# Load dataset
+df = pd.read_csv(os.path.join(path, "INFY.csv"))
+
+# Convert date column
+df['Date'] = pd.to_datetime(df['Date'])
+df.set_index('Date', inplace=True)
+
+# Select closing price
+ts = df['Close']
+
+# Create time index
+x = np.arange(len(ts))
+y = ts.values
+
+# Linear Trend
+linear_coeff = np.polyfit(x, y, 1)
+linear_trend = np.poly1d(linear_coeff)(x)
+
+# Non-Linear Trend (Polynomial Degree 3)
+nonlinear_coeff = np.polyfit(x, y, 3)
+nonlinear_trend = np.poly1d(nonlinear_coeff)(x)
+
+# Plot
+plt.figure(figsize=(10,5))
+plt.plot(ts.index, y, label='Original Data')
+plt.plot(ts.index, linear_trend, label='Linear Trend', linewidth=3)
+plt.plot(ts.index, nonlinear_trend, label='Non-Linear Trend', linewidth=3)
+plt.title('Linear vs Non-Linear Trends in Time Series')
+plt.legend()
+plt.show()
