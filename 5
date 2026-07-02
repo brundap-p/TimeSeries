@@ -1,0 +1,42 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.stattools import adfuller
+import os
+import kagglehub
+
+# Download dataset
+path = kagglehub.dataset_download("ciochdawid/dailydelhiclimatetrain-csv")
+
+# Load dataset
+df = pd.read_csv(os.path.join(path, "DailyDelhiClimateTrain.csv"))
+
+# Convert date column to datetime
+df['date'] = pd.to_datetime(df['date'])
+
+# Set date as index
+df.set_index('date', inplace=True)
+
+# Select time series column
+ts = df['meantemp']
+
+# Apply differencing to make stationary
+ts_diff = ts.diff().dropna()
+
+# Plot differenced series
+plt.figure(figsize=(10, 5))
+plt.plot(ts_diff)
+plt.title("Differenced Time Series")
+plt.xlabel("Date")
+plt.ylabel("Differenced Mean Temperature")
+plt.show()
+
+# Check stationarity using ADF test
+result = adfuller(ts_diff)
+
+print("ADF Statistic:", result[0])
+print("p-value:", result[1])
+
+if result[1] < 0.05:
+    print("The time series is now stationary")
+else:
+    print("The time series is still not stationary")
