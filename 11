@@ -1,0 +1,60 @@
+import os
+import kagglehub
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
+from statsmodels.tsa.arima.model import ARIMA
+
+# Download dataset
+path = kagglehub.dataset_download("rohanrao/nifty50-stock-market-data")
+
+# Load dataset
+df = pd.read_csv(os.path.join(path, "INFY.csv"))
+
+# Convert date column
+df['Date'] = pd.to_datetime(df['Date'])
+df.set_index('Date', inplace=True)
+
+# Select closing price
+ts = df['Close']
+
+# Split data
+train = ts[:int(len(ts)*0.8)]
+test = ts[int(len(ts)*0.8):]
+
+# -----------------------------
+# 1. Moving Average Model
+# -----------------------------
+moving_avg = train.rolling(window=30).mean()
+# The forecast should be based on the last 'window' values of the training data
+ma_forecast = [train.iloc[-30:].mean()] * len(test)
+
+# -----------------------------
+# 2. Exponential Smoothing
+# -----------------------------
+# Add freq='D' to ensure the date index frequency is recognized
+exp_model = ExponentialSmoothing(train, trend='add', seasonal=None, seasonal_periods=None, freq='D')
+exp_fit = exp_model.fit()
+exp_forecast = exp_fit.forecast(len(test))
+
+# -----------------------------
+# 3. ARIMA
+# -----------------------------
+# Add freq='D' to ensure the date index frequency is recognized
+arima_model = ARIMA(train, order=(5,1,0), freq='D')
+arima_fit = arima_model.fit()
+arima_forecast = arima_fit.forecast(steps=len(test))
+
+# Plot
+plt.figure(figsize=(12,6))
+plt.plot(test.index, test, label='Actual Data')
+plt.plot(test.index, ma_forecast, label='Moving Average Forecast')
+plt.plot(test.index, exp_forecast, label='Exponential Smoothing Forecast')
+plt.plot(test.index, arima_forecast, label='ARIMA Forecast')
+
+plt.title('Time Series Modeling Comparison')
+plt.xlabel('Date')
+plt.ylabel('Closing Price')
+plt.legend()
+plt.grid(True)
+plt.show()
