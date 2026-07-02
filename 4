@@ -1,0 +1,52 @@
+import kagglehub
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.stattools import adfuller
+import os
+
+# Download dataset (this will download if not already present)
+path = kagglehub.dataset_download("ciochdawid/dailydelhiclimatetrain-csv")
+
+# Load dataset
+df = pd.read_csv(os.path.join(path, "DailyDelhiClimateTrain.csv"))
+
+# Convert date column to datetime
+df['date'] = pd.to_datetime(df['date'])
+
+# Set date as index
+df.set_index('date', inplace=True)
+
+# Select time series column
+ts = df['meantemp']
+
+# Plot time series
+plt.figure(figsize=(10, 5))
+plt.plot(ts)
+plt.title("Time Series Plot")
+plt.xlabel("Date")
+plt.ylabel("Mean Temperature")
+plt.show()
+
+
+# Rolling statistics
+rolling_mean = ts.rolling(window=30).mean()
+rolling_std = ts.rolling(window=30).std()
+
+plt.figure(figsize=(10, 5))
+plt.plot(ts, label='Original')
+plt.plot(rolling_mean, label='Rolling Mean')
+plt.plot(rolling_std, label='Rolling Std')
+plt.legend()
+plt.title("Rolling Mean & Standard Deviation")
+plt.show()
+
+# Augmented Dickey-Fuller Test
+result = adfuller(ts.dropna())
+
+print("ADF Statistic:", result[0])
+print("p-value:", result[1])
+
+if result[1] < 0.05:
+    print("The time series is stationary")
+else:
+    print("The time series is not stationary")
