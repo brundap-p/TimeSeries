@@ -1,0 +1,128 @@
+# A)SARIMA
+import os
+import kagglehub
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+
+# Download dataset
+path = kagglehub.dataset_download("rakannimer/air-passengers")
+
+# Load dataset
+df = pd.read_csv(os.path.join(path, "AirPassengers.csv"))
+
+# Convert date column
+df['Month'] = pd.to_datetime(df['Month'])
+df.set_index('Month', inplace=True)
+
+# Select series
+ts = df['#Passengers']
+
+# Split data
+train = ts[:int(len(ts)*0.8)]
+test = ts[int(len(ts)*0.8):]
+
+# SARIMA Model
+model = SARIMAX(train,
+                order=(1,1,1),
+                seasonal_order=(1,1,1,12))
+
+fit_model = model.fit()
+
+# Forecast
+forecast = fit_model.forecast(steps=len(test))
+
+# Plot
+plt.figure(figsize=(10,5))
+plt.plot(train, label='Training Data')
+plt.plot(test, label='Actual Data')
+plt.plot(test.index, forecast, label='SARIMA Forecast')
+plt.title('SARIMA Model')
+plt.legend()
+plt.show()
+
+# B)Dependence Technique - MANOVA / MANCOVA
+
+import os
+import kagglehub
+import pandas as pd
+from statsmodels.multivariate.manova import MANOVA
+import statsmodels.api as sm
+
+# Download dataset
+path = kagglehub.dataset_download("uciml/iris")
+
+# Load dataset
+df = pd.read_csv(os.path.join(path, "Iris.csv"))
+
+# MANOVA
+manova = MANOVA.from_formula(
+    'SepalLengthCm + SepalWidthCm + PetalLengthCm + PetalWidthCm ~ Species',
+    data=df
+)
+
+print(manova.mv_test())
+
+# MANCOVA (adding covariance variable)
+df['Covariate'] = df['SepalLengthCm']
+
+mancova = MANOVA.from_formula(
+    'PetalLengthCm + PetalWidthCm ~ Species + Covariate',
+    data=df
+)
+
+print(mancova.mv_test())
+
+#C)Canonical Correlation Analysis
+import os
+import kagglehub
+import pandas as pd
+from sklearn.cross_decomposition import CCA
+
+# Download dataset
+path = kagglehub.dataset_download("uciml/iris")
+
+# Load dataset
+df = pd.read_csv(os.path.join(path, "Iris.csv"))
+
+# Variable groups
+X = df[['SepalLengthCm', 'SepalWidthCm']]
+Y = df[['PetalLengthCm', 'PetalWidthCm']]
+
+# CCA model
+cca = CCA(n_components=1)
+X_c, Y_c = cca.fit_transform(X, Y)
+
+print("Canonical Correlation Analysis Completed")
+
+#D)Structural Equation Modelling
+%pip install semopy
+
+import os
+import kagglehub
+import pandas as pd
+from semopy import Model
+
+# Download dataset
+path = kagglehub.dataset_download("uciml/iris")
+
+# Load dataset
+df = pd.read_csv(os.path.join(path, "Iris.csv"))
+
+# SEM model definition
+desc = """
+PetalLengthCm ~ SepalLengthCm + SepalWidthCm
+PetalWidthCm ~ PetalLengthCm + SepalLengthCm
+"""
+
+# Build model
+model = Model(desc)
+model.fit(df)
+
+# Results
+print(model.inspect())
+
+
+
+
+
