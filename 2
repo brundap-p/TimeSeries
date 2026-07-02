@@ -1,0 +1,34 @@
+import pandas as pd
+import seaborn as sns
+
+# Load inbuilt dataset
+df = sns.load_dataset('flights')
+
+# Create datetime column
+df['date'] = pd.to_datetime(df['year'].astype(str) + '-' + df['month'].astype(str))
+
+# Set date as index
+df.set_index('date', inplace=True)
+
+# Keep only passenger column
+df = df[['passengers']]
+
+# Sort data
+df = df.sort_index()
+
+print("\nProcessed Time Series Data (head):")
+print(df.head())
+
+# Access specific year
+print("\nData for 1955:")
+df.index = pd.to_datetime(df.index)
+print(df.loc['1955'])
+
+
+# Monthly resampling to yearly average
+print("\nYearly Average:")
+print(df.resample('YE').mean()) # Changed 'Y' to 'YE' to suppress FutureWarning
+
+# Time slicing (select a date range)
+print("\nTime Slicing (1952 to 1954):")
+print(df['1952':'1954'])
