@@ -1,0 +1,57 @@
+import os
+import kagglehub
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.seasonal import seasonal_decompose
+
+# --- 1. Load Dataset ---
+# Download dataset
+path = kagglehub.dataset_download("ciochdawid/dailydelhiclimatetrain-csv")
+
+# Load dataset
+df = pd.read_csv(os.path.join(path, "DailyDelhiClimateTrain.csv"))
+
+# Convert date column and set as index
+df['date'] = pd.to_datetime(df['date'])
+df.set_index('date', inplace=True)
+
+# Select time series column
+ts = df['meantemp']
+
+# --- 2. Eliminating Trend and Seasonality ---
+
+# 2.1. Differencing
+differenced = ts.diff().dropna()
+
+plt.figure(figsize=(10,5))
+plt.plot(differenced)
+plt.title('Trend and Seasonality Removed using Differencing')
+plt.xlabel('Date')
+plt.ylabel('Differenced Meantemp')
+plt.grid(True)
+plt.show()
+
+# 2.2. Decomposition
+decomp = seasonal_decompose(ts, model='additive', period=365) # Assuming yearly seasonality
+
+trend = decomp.trend
+seasonal = decomp.seasonal
+residual = decomp.resid
+
+# Plot decomposition components
+fig = decomp.plot()
+fig.set_size_inches(10, 8)
+plt.suptitle('Time Series Decomposition of Mean Temperature', y=1.02) # Adjust suptitle position
+plt.tight_layout(rect=[0, 0.03, 1, 0.98]) # Adjust layout to prevent overlap
+plt.show()
+
+# Trend + Seasonality removed (Residual component)
+deseasonal_detrended = residual.dropna()
+
+plt.figure(figsize=(10,5))
+plt.plot(deseasonal_detrended)
+plt.title('Trend and Seasonality Removed using Decomposition (Residual Component)')
+plt.xlabel('Date')
+plt.ylabel('Residual Meantemp')
+plt.grid(True)
+plt.show()
