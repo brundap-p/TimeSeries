@@ -1,0 +1,56 @@
+import kagglehub
+path = kagglehub.dataset_download("ciochdawid/dailydelhiclimatetrain-csv")
+print(path)
+
+import pandas as pd
+import os
+from sklearn.preprocessing import MinMaxScaler
+
+df = pd.read_csv(os.path.join(path, "DailyDelhiClimateTrain.csv"))
+
+print("--- Data Preparation & Preprocessing Started ---")
+
+# --- Introduce Missing Values Manually (for demonstration) ---
+df.loc[5, 'meantemp'] = None
+df.loc[10, 'humidity'] = None
+df.loc[15, 'wind_speed'] = None
+df.loc[20, 'meanpressure'] = None
+
+# --- Introduce Duplicate Rows Manually (for demonstration) ---
+df = pd.concat([df, df.iloc[[3]]], ignore_index=True)
+df = pd.concat([df, df.iloc[[7]]], ignore_index=True) # Adding another duplicate
+
+print("\nMissing Values Before Preprocessing:")
+print(df.isnull().sum())
+print("\nDuplicate Rows Before Preprocessing:")
+print(df.duplicated().sum())
+
+# --- Preprocessing Steps ---
+
+
+# 1. Remove duplicates
+df = df.drop_duplicates()
+
+# 2. Fill missing values (using forward fill as demonstrated previously)
+df = df.ffill()
+
+# 3. Detect and remove outliers (meantemp) using IQR method
+Q1 = df['meantemp'].quantile(0.25)
+Q3 = df['meantemp'].quantile(0.75)
+IQR = Q3 - Q1
+df = df[
+    (df['meantemp'] >= Q1 - 1.5 * IQR) &
+    (df['meantemp'] <= Q3 + 1.5 * IQR)
+]
+
+# 4. Feature normalization using MinMax Scaling
+scaler = MinMaxScaler()
+cols = ['meantemp', 'humidity', 'wind_speed', 'meanpressure']
+df[cols] = scaler.fit_transform(df[cols])
+
+print("\nMissing Values After Preprocessing:")
+print(df.isnull().sum())
+print("\nDuplicate Rows After Preprocessing:")
+print(df.duplicated().sum())
+print("--- Data Preparation & Preprocessing Finished ---")
+display(df.head())
