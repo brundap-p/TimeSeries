@@ -1,0 +1,66 @@
+import os
+import kagglehub
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Download dataset
+path = kagglehub.dataset_download("ciochdawid/dailydelhiclimatetrain-csv")
+
+# Load dataset
+df = pd.read_csv(os.path.join(path, "DailyDelhiClimateTrain.csv"))
+
+# Convert date column and set as index
+df['date'] = pd.to_datetime(df['date'])
+df.set_index('date', inplace=True)
+
+# Use temperature column
+ts = df['meantemp']
+
+# -------------------------------
+# 1. Aggregation (Monthly Mean)
+# -------------------------------
+monthly_trend = ts.resample('M').mean()
+
+plt.figure(figsize=(10,5))
+plt.plot(ts, label='Original Data')
+plt.plot(monthly_trend, label='Aggregated Trend', linewidth=3)
+plt.title('Trend Estimation using Aggregation')
+plt.legend()
+plt.show()
+
+# -------------------------------
+# 2. Smoothing (Rolling Mean)
+# -------------------------------
+smoothed = ts.rolling(window=30).mean()
+
+plt.figure(figsize=(10,5))
+plt.plot(ts, label='Original Data')
+plt.plot(smoothed, label='Smoothed Trend', linewidth=3)
+plt.title('Trend Estimation using Smoothing')
+plt.legend()
+plt.show()
+
+# -------------------------------
+# 3. Polynomial Fitting
+# -------------------------------
+x = np.arange(len(ts))
+y = ts.values
+
+coeff = np.polyfit(x, y, 2)   # degree 2 polynomial
+trend = np.poly1d(coeff)(x)
+
+plt.figure(figsize=(10,5))
+plt.plot(ts, label='Original Data')
+plt.plot(ts.index, trend, label='Polynomial Trend', linewidth=3)
+plt.title('Trend Estimation using Polynomial Fitting')
+plt.legend()
+plt.show()
+
+# 4. Eliminating Trend
+detrended = ts - trend
+
+plt.figure(figsize=(10,5))
+plt.plot(ts.index, detrended)
+plt.title('Trend Eliminated Data')
+plt.show()
