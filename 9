@@ -1,0 +1,28 @@
+import os
+import kagglehub
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Download dataset
+path = kagglehub.dataset_download("rohanrao/nifty50-stock-market-data")
+
+# Load dataset
+df = pd.read_csv(os.path.join(path, "INFY.csv"))
+
+# Convert date column
+df['Date'] = pd.to_datetime(df['Date'])
+df.set_index('Date', inplace=True)
+
+# Select closing price
+ts = df['Close']
+
+# Smoothing using Moving Average
+smoothed = ts.rolling(window=30).mean()
+
+# Plot
+plt.figure(figsize=(10,5))
+plt.plot(ts, label='Original Data')
+plt.plot(smoothed, label='Smoothed Data (30-Day Moving Average)', linewidth=3)
+plt.title('Smoothing Time Series Data')
+plt.legend()
+plt.show()
